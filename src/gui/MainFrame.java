@@ -14,6 +14,8 @@ public class MainFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 600);
 		
+		setJMenuBar(new JunctionMenuBar(this));
+		
 		canvas = new JPanel();
 		
 		getContentPane().add(canvas, BorderLayout.CENTER);
