@@ -1,6 +1,8 @@
 import java.awt.EventQueue;
 import javax.swing.JFrame;
 
+import gui.MainFrame;
+
 public class JunctionManagerApp {
 	
 	private JFrame frame;
@@ -32,10 +34,7 @@ public class JunctionManagerApp {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 511, 354);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frame = new MainFrame();
 	}
 
 }
