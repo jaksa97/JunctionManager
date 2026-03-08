@@ -19,8 +19,6 @@ public class MainFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 600);
 		
-		setJMenuBar(new JunctionMenuBar(this, horizontalLight, verticalLight));
-		
 		canvas = new DrawingPanel(horizontalLight, verticalLight);
 		canvas.addMouseListener(new MouseAdapter() {
             @Override
@@ -28,6 +26,8 @@ public class MainFrame extends JFrame {
                 canvas.spawnVehicle();
             }
         });
+		
+		setJMenuBar(new JunctionMenuBar(this, canvas, horizontalLight, verticalLight));
 		
 		getContentPane().add(canvas, BorderLayout.CENTER);
 		

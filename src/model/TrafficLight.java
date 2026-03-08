@@ -18,12 +18,12 @@ public class TrafficLight implements Runnable {
         this.currentState = startsGreen ? new GreenState() : new RedState();
     }
 
-    public void setRunning(boolean run) {
+    public void setRunning(boolean isRunning) {
         lock.lock();
         try {
-            isRunning = run;
-            if (isRunning) {
-                runningCondition.signal(); // wake up the thread
+            this.isRunning = isRunning;
+            if (this.isRunning) {
+                runningCondition.signal();	// Wake up the thread
             }
         } finally {
             lock.unlock();
@@ -54,23 +54,23 @@ public class TrafficLight implements Runnable {
             lock.lock();
             try {
                 while (!isRunning) {
-                    runningCondition.await(); // wait until simulation starts
+                    runningCondition.await();	// Wait until simulation starts
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break; // exit thread safely
+                break;	// Exit thread safely
             } finally {
                 lock.unlock();
             }
 
             try {
-                Thread.sleep(currentState.getDuration()); // stay in current state
+                Thread.sleep(currentState.getDuration());	// Stay in current state
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
 
-            // change to next state
+            // Change to next state
             lock.lock();
             
             try {

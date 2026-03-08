@@ -9,7 +9,7 @@ public class JunctionManager {
     private boolean occupied = false;
     
     private final ReentrantLock lock = new ReentrantLock();
-    private final Condition free = lock.newCondition(); // for waiting vehicles
+    private final Condition free = lock.newCondition();	// For waiting vehicles
     
     private JunctionManager() {}
     
@@ -40,7 +40,7 @@ public class JunctionManager {
         try {
             occupied = false;
             passedVehicles++;
-            free.signal(); // allow one waiting vehicle
+            free.signal();	// Allow one waiting vehicle
         } finally {
             lock.unlock();
         }

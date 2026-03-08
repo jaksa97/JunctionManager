@@ -12,11 +12,11 @@ public class JunctionMenuBar extends JMenuBar {
 	
 	private boolean simRunning = false;
 	
-	public JunctionMenuBar(JFrame parent, TrafficLight horizontalLight, TrafficLight verticalLight) {
+	public JunctionMenuBar(JFrame parent, DrawingPanel drawingPanel, TrafficLight horizontalLight, TrafficLight verticalLight) {
 		JMenu simulation = new JMenu("Simulation");
 		JMenuItem stopStart = new JMenuItem("Start/Stop");
 		
-		stopStart.addActionListener(event -> startStopSim(horizontalLight, verticalLight));
+		stopStart.addActionListener(event -> startStopSim(drawingPanel, horizontalLight, verticalLight));
 		
 		simulation.add(stopStart);
 		add(simulation);
@@ -38,10 +38,18 @@ public class JunctionMenuBar extends JMenuBar {
         add(stats);
 	}
 	
-	private void startStopSim(TrafficLight horizontalLight, TrafficLight verticalLight) {
+	private void startStopSim(DrawingPanel drawingPanel, TrafficLight horizontalLight, TrafficLight verticalLight) {
 		simRunning = !simRunning;
-		horizontalLight.setRunning(simRunning);
-		verticalLight.setRunning(simRunning);
+		
+		if (simRunning) {
+	        drawingPanel.startSimulation();
+	        horizontalLight.setRunning(true);
+	        verticalLight.setRunning(true);
+	    } else {
+	        drawingPanel.stopSimulation();
+	        horizontalLight.setRunning(false);
+	        verticalLight.setRunning(false);
+	    }
 	}
 
 }

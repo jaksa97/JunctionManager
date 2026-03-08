@@ -22,6 +22,8 @@ public class DrawingPanel extends JPanel {
 	private TrafficLight horizontalLight;
     private TrafficLight verticalLight;
     
+    private volatile boolean isRunning = true;
+    
     public DrawingPanel(TrafficLight horizontalLight, TrafficLight verticalLight) {
     	setBackground(Color.WHITE);
         this.horizontalLight = horizontalLight;
@@ -58,11 +60,62 @@ public class DrawingPanel extends JPanel {
 			}
         }
         
+        // Prevent spawn collision
+        if (!canSpawnVehicle(startX, startY, entrance)) {
+            return;
+        }
+        
         TrafficLight vehicleTrafficLight = entrance < 2 ? verticalLight : horizontalLight;
         
-        Vehicle vehicle = new Vehicle(startX, startY, entrance, vehicleTrafficLight);
+        Vehicle vehicle = new Vehicle(startX, startY, entrance, vehicleTrafficLight, vehicles);
         vehicles.add(vehicle);
         executorService.execute(vehicle);
+	}
+	
+	private boolean canSpawnVehicle(int x, int y, int entrance) {
+	    synchronized (vehicles) {
+	        for (Vehicle v : vehicles) {
+
+	            // Check vehicles from same lane
+	            if (v.getEntrance() == entrance) {
+
+	                // Vertical lanes
+	                if (entrance < 2) {
+	                    if (Math.abs(v.getY() - y) < 50) {
+	                        return false;
+	                    }
+	                }
+
+	                // Horizontal lanes
+	                else {
+	                    if (Math.abs(v.getX() - x) < 50) {
+	                        return false;
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    return true;
+	}
+	
+	public void startSimulation() {
+		isRunning = true;
+		
+		synchronized (vehicles) {
+            for (Vehicle vehicle : vehicles) {
+            	vehicle.setRunning(true);
+            }
+        }
+	}
+	
+	public void stopSimulation() {
+		isRunning = false;
+		
+		synchronized (vehicles) {
+            for (Vehicle vehicle : vehicles) {
+            	vehicle.setRunning(false);
+            }
+        }
 	}
 
 	@Override
@@ -85,8 +138,12 @@ public class DrawingPanel extends JPanel {
         drawTrafficLight(graphics2d, verticalLight, w/2 + 50, h/2 + 50);
         
         synchronized (vehicles) {
-            for (Vehicle v : vehicles) {
-                v.draw(graphics);
+            vehicles.removeIf(vehicle -> vehicle.isOutOfScreen());
+        }
+        
+        synchronized (vehicles) {
+            for (Vehicle vehicle : vehicles) {
+            	vehicle.draw(graphics);
             }
         }
 	}
