@@ -6,6 +6,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import model.JunctionManager;
 import model.TrafficLight;
 
 public class JunctionMenuBar extends JMenuBar {
@@ -25,7 +26,7 @@ public class JunctionMenuBar extends JMenuBar {
         JMenuItem passed = new JMenuItem("Vehicles Passed");
 
         passed.addActionListener(event -> {
-            int count = 0;
+        	int count = JunctionManager.getInstance().getPassedVehicles();
             JOptionPane.showMessageDialog(
                     parent,
                     "Total vehicles passed: " + count,

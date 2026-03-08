@@ -28,16 +28,18 @@ public class Vehicle implements Runnable {
 	public void run() {
 		while (x < 800 && y < 600 && x > -50 && y > -50) {
 			try {
-				// Check if vehicle is at stop line
-	            if (isAtStopLine()) {
-	                // Wait until the light turns GREEN
-	                while (!myLight.isGreen()) {
-	                    Thread.sleep(30);
-	                }
+				if (isAtStopLine()) {
+	                // wait for green
+	                while (!myLight.isGreen()) Thread.sleep(30);
 
-	                // Move through intersection safely
-	                moveThroughIntersection();
-	                continue; // skip normal movement this loop
+	                // **enter junction** - only 1 vehicle at a time
+	                JunctionManager.getInstance().enterJunction();
+	                try {
+	                    moveThroughIntersection(); // now moves fully across junction
+	                } finally {
+	                	JunctionManager.getInstance().exitJunction();
+	                }
+	                continue;
 	            }
 				switch (entrance) {
 					case 0: {
@@ -93,21 +95,27 @@ public class Vehicle implements Runnable {
 	}
 	
 	private void moveThroughIntersection() throws InterruptedException {
+	    int midX = 400;
+	    int midY = 300;
+	    int roadHalfWidth = 40;
+
+	    while (true) {
+	        // Move the vehicle based on entrance
 	        switch (entrance) {
-	            case 0: // top → moving down
-	                y += speed;
-	                break;
-	            case 1: // bottom → moving up
-	                y -= speed;
-	                break;
-	            case 2: // left → moving right
-	                x += speed;
-	                break;
-	            case 3: // right → moving left
-	                x -= speed;
-	                break;
+	            case 0 -> y += speed; // top → down
+	            case 1 -> y -= speed; // bottom → up
+	            case 2 -> x += speed; // left → right
+	            case 3 -> x -= speed; // right → left
 	        }
+
 	        Thread.sleep(30);
+
+	        // Check if vehicle has left the junction
+	        if (entrance == 0 && y >= midY + roadHalfWidth) break;
+	        if (entrance == 1 && y <= midY - roadHalfWidth) break;
+	        if (entrance == 2 && x >= midX + roadHalfWidth) break;
+	        if (entrance == 3 && x <= midX - roadHalfWidth) break;
+	    }
 	}
 
 }
