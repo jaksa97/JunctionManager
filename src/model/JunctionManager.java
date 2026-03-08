@@ -21,12 +21,12 @@ public class JunctionManager {
     	return instance;
     }
     
-    // Vehicle tries to enter the junction
+    // Vehicle enters junction – only one at a time
     public void enterJunction() throws InterruptedException {
         lock.lock();
         try {
             while (occupied) {
-                free.await(); // wait until junction is free
+                free.await();
             }
             occupied = true;
         } finally {
@@ -34,18 +34,18 @@ public class JunctionManager {
         }
     }
 
-    // Vehicle leaves the junction
+    // Vehicle exits junction
     public void exitJunction() {
         lock.lock();
         try {
             occupied = false;
             passedVehicles++;
-            free.signalAll(); // notify waiting vehicles
+            free.signal(); // allow one waiting vehicle
         } finally {
             lock.unlock();
         }
     }
-    
+
     public int getPassedVehicles() {
         lock.lock();
         try {

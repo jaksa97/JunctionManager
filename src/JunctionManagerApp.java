@@ -1,6 +1,5 @@
 import java.awt.EventQueue;
 import javax.swing.JFrame;
-
 import gui.MainFrame;
 
 public class JunctionManagerApp {

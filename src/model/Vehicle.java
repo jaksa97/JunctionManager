@@ -10,7 +10,6 @@ public class Vehicle implements Runnable {
     private int speed;
     private Color color;
     private int entrance;
-    private boolean isRunning = true;
     private TrafficLight myLight;
     
     public Vehicle(int x, int y, int entrance, TrafficLight light) {
@@ -30,35 +29,23 @@ public class Vehicle implements Runnable {
 			try {
 				if (isAtStopLine()) {
 	                // wait for green
-	                while (!myLight.isGreen()) Thread.sleep(30);
+	                while (!myLight.isGreen()) {
+	                	Thread.sleep(30);
+	                }
 
-	                // **enter junction** - only 1 vehicle at a time
+	                // enter junction - only 1 vehicle at a time
 	                JunctionManager.getInstance().enterJunction();
+	                
 	                try {
-	                    moveThroughIntersection(); // now moves fully across junction
+	                    moveThroughIntersection();
 	                } finally {
 	                	JunctionManager.getInstance().exitJunction();
 	                }
+	                
 	                continue;
 	            }
-				switch (entrance) {
-					case 0: {
-						y += speed;
-						break;
-					}
-					case 1: {
-						y -= speed;
-						break;
-					}
-					case 2: {
-						x += speed;
-						break;
-					}
-					case 3: {
-						x -= speed;
-						break;
-					}
-				}
+				
+				moveOneStep();
 				Thread.sleep(30);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -81,16 +68,21 @@ public class Vehicle implements Runnable {
 	
 	private boolean isAtStopLine() {
 	    switch (entrance) {
-	        case 0: // top → moving down
+	        case 0 -> {
 	            return y >= 190 && y <= 200;
-	        case 1: // bottom → moving up
+	        }
+	        case 1 -> {
 	            return y >= 310 && y <= 320;
-	        case 2: // left → moving right
+	        }
+	        case 2 -> {
 	            return x >= 310 && x <= 320;
-	        case 3: // right → moving left
+	        }
+	        case 3 -> {
 	            return x >= 430 && x <= 440;
-	        default:
+	        }
+	        default -> {
 	            return false;
+	        }
 	    }
 	}
 	
@@ -100,13 +92,7 @@ public class Vehicle implements Runnable {
 	    int roadHalfWidth = 40;
 
 	    while (true) {
-	        // Move the vehicle based on entrance
-	        switch (entrance) {
-	            case 0 -> y += speed; // top → down
-	            case 1 -> y -= speed; // bottom → up
-	            case 2 -> x += speed; // left → right
-	            case 3 -> x -= speed; // right → left
-	        }
+	        moveOneStep();
 
 	        Thread.sleep(30);
 
@@ -117,5 +103,14 @@ public class Vehicle implements Runnable {
 	        if (entrance == 3 && x <= midX - roadHalfWidth) break;
 	    }
 	}
+	
+	private void moveOneStep() {
+        switch (entrance) {
+            case 0 -> y += speed;
+            case 1 -> y -= speed;
+            case 2 -> x += speed;
+            case 3 -> x -= speed;
+        }
+    }
 
 }

@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.swing.JPanel;
-
 import model.TrafficLight;
 import model.Vehicle;
 
@@ -40,28 +38,23 @@ public class DrawingPanel extends JPanel {
 		int startY = 0;
         int midX = getWidth() / 2;
         int midY = getHeight() / 2;
-        boolean isVertical = false;
         
         switch (entrance) {
-			case 0: {
+			case 0 -> {
 				startX = midX - 30; 
 				startY = 0;
-				break;
 			}
-			case 1: {
+			case 1 -> {
 				startX = midX + 10; 
 				startY = getHeight();
-				break;
 			}
-			case 2: {
+			case 2 -> {
 				startX = 0; 
 				startY = midY + 10;
-				break;
 			}
-			case 3: {
+			case 3 -> {
 				startX = getWidth(); 
 				startY = midY - 30;
-				break;
 			}
         }
         
@@ -84,10 +77,7 @@ public class DrawingPanel extends JPanel {
         int centerX = w / 2;
         int centerY = h / 2;
 
-        // Draw roads
-        graphics2d.setColor(Color.GRAY);
-        graphics2d.fillRect(0, centerY - 40, w, 80);
-        graphics2d.fillRect(centerX - 40, 0, 80, h);
+        drawRoads(graphics2d, w, h, centerX, centerY);
         
         drawDashedLine(graphics2d, w, h, centerX, centerY);
         
@@ -99,6 +89,12 @@ public class DrawingPanel extends JPanel {
                 v.draw(graphics);
             }
         }
+	}
+	
+	private void drawRoads(Graphics2D graphics2d, int width, int height, int centerX, int centerY) {
+		graphics2d.setColor(Color.GRAY);
+        graphics2d.fillRect(0, centerY - 40, width, 80);
+        graphics2d.fillRect(centerX - 40, 0, 80, height);
 	}
 	
 	private void drawDashedLine(Graphics2D graphics2d, int width, int height, int centerX, int centerY) {
