@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.JPanel;
+
+import model.TrafficLight;
 import model.Vehicle;
 
 public class DrawingPanel extends JPanel {
@@ -19,9 +21,16 @@ public class DrawingPanel extends JPanel {
 	private List<Vehicle> vehicles = Collections.synchronizedList(new ArrayList<>());
 	private ExecutorService executorService = Executors.newCachedThreadPool();
 	
-	public DrawingPanel() {
-		setBackground(Color.WHITE);
-	}
+	private TrafficLight horizontalLight;
+    private TrafficLight verticalLight;
+    
+    public DrawingPanel(TrafficLight horizontalLight, TrafficLight verticalLight) {
+    	setBackground(Color.WHITE);
+        this.horizontalLight = horizontalLight;
+        this.verticalLight = verticalLight;
+        executorService.execute(horizontalLight);
+        executorService.execute(verticalLight);
+    }
 	
 	public void spawnVehicle() {
 		Random random = new Random();
@@ -56,7 +65,9 @@ public class DrawingPanel extends JPanel {
 			}
         }
         
-        Vehicle vehicle = new Vehicle(startX, startY, entrance);
+        TrafficLight vehicleTrafficLight = entrance < 2 ? verticalLight : horizontalLight;
+        
+        Vehicle vehicle = new Vehicle(startX, startY, entrance, vehicleTrafficLight);
         vehicles.add(vehicle);
         executorService.execute(vehicle);
 	}
@@ -65,7 +76,7 @@ public class DrawingPanel extends JPanel {
 	public void paint(Graphics graphics) {
 		super.paint(graphics);
 		
-		Graphics2D g2 = (Graphics2D) graphics;
+		Graphics2D graphics2d = (Graphics2D) graphics;
 		
 		int w = getWidth();
         int h = getHeight();
@@ -74,11 +85,23 @@ public class DrawingPanel extends JPanel {
         int centerY = h / 2;
 
         // Draw roads
-        g2.setColor(Color.GRAY);
-        g2.fillRect(0, centerY - 40, w, 80);
-        g2.fillRect(centerX - 40, 0, 80, h);
+        graphics2d.setColor(Color.GRAY);
+        graphics2d.fillRect(0, centerY - 40, w, 80);
+        graphics2d.fillRect(centerX - 40, 0, 80, h);
         
-        // Draw dashed lines
+        drawDashedLine(graphics2d, w, h, centerX, centerY);
+        
+        drawTrafficLight(graphics2d, horizontalLight, w/2 - 75, h/2 - 100);
+        drawTrafficLight(graphics2d, verticalLight, w/2 + 50, h/2 + 50);
+        
+        synchronized (vehicles) {
+            for (Vehicle v : vehicles) {
+                v.draw(graphics);
+            }
+        }
+	}
+	
+	private void drawDashedLine(Graphics2D graphics2d, int width, int height, int centerX, int centerY) {
         float[] dashPattern = {20f, 20f};
         BasicStroke dashed = new BasicStroke(
                 3,
@@ -89,26 +112,27 @@ public class DrawingPanel extends JPanel {
                 0
         );
 
-        g2.setStroke(dashed);
-        g2.setColor(Color.WHITE);
+        graphics2d.setStroke(dashed);
+        graphics2d.setColor(Color.WHITE);
 
         // Horizontal road dashed lines (LEFT side)
-        g2.drawLine(0, centerY, centerX - 40, centerY);
+        graphics2d.drawLine(0, centerY, centerX - 40, centerY);
 
         // Horizontal road dashed lines (RIGHT side)
-        g2.drawLine(centerX + 40, centerY, w, centerY);
+        graphics2d.drawLine(centerX + 40, centerY, width, centerY);
 
         // Vertical road dashed lines (TOP side)
-        g2.drawLine(centerX, 0, centerX, centerY - 40);
+        graphics2d.drawLine(centerX, 0, centerX, centerY - 40);
 
         // Vertical road dashed lines (BOTTOM side)
-        g2.drawLine(centerX, centerY + 40, centerX, h);
-        
-        synchronized (vehicles) {
-            for (Vehicle v : vehicles) {
-                v.draw(graphics);
-            }
-        }
+        graphics2d.drawLine(centerX, centerY + 40, centerX, height);
 	}
+	
+	private void drawTrafficLight(Graphics2D g2d, TrafficLight trafficLight, int x, int y) {
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(x, y, 20, 50);
+        g2d.setColor(trafficLight.getCurrentState().getColor());
+        g2d.fillOval(x + 2, y + 5, 15, 15);
+    }
 	
 }

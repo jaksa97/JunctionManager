@@ -6,15 +6,17 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import model.TrafficLight;
+
 public class JunctionMenuBar extends JMenuBar {
 	
 	private boolean simRunning = false;
 	
-	public JunctionMenuBar(JFrame parent) {
+	public JunctionMenuBar(JFrame parent, TrafficLight horizontalLight, TrafficLight verticalLight) {
 		JMenu simulation = new JMenu("Simulation");
 		JMenuItem stopStart = new JMenuItem("Start/Stop");
 		
-		stopStart.addActionListener(event -> startStopSim());
+		stopStart.addActionListener(event -> startStopSim(horizontalLight, verticalLight));
 		
 		simulation.add(stopStart);
 		add(simulation);
@@ -36,8 +38,10 @@ public class JunctionMenuBar extends JMenuBar {
         add(stats);
 	}
 	
-	private void startStopSim() {
+	private void startStopSim(TrafficLight horizontalLight, TrafficLight verticalLight) {
 		simRunning = !simRunning;
+		horizontalLight.setRunning(simRunning);
+		verticalLight.setRunning(simRunning);
 	}
 
 }
