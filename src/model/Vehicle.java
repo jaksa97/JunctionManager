@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Vehicle implements Runnable {
 	
@@ -13,6 +15,9 @@ public class Vehicle implements Runnable {
     private int entrance;
     private TrafficLight myLight;
     private List<Vehicle> allVehicles;
+    
+    private final ReentrantLock pauseLock = new ReentrantLock();
+    private final Condition runningCondition = pauseLock.newCondition();
     private volatile boolean isRunning = true;
     
     public Vehicle(int x, int y, int entrance, TrafficLight light, List<Vehicle> allVehicles) {
@@ -40,7 +45,15 @@ public class Vehicle implements Runnable {
     }
     
     public void setRunning(boolean isRunning) {
-    	this.isRunning = isRunning;
+    	pauseLock.lock();
+        try {
+            this.isRunning = isRunning;
+            if (this.isRunning) {
+                runningCondition.signalAll();
+            }
+        } finally {
+            pauseLock.unlock();
+        }
     }
 
 	@Override
@@ -48,10 +61,14 @@ public class Vehicle implements Runnable {
 		while (true) {
 			try {
 				
-				// Pause simulation
-                if (!isRunning) {
-                    Thread.sleep(50);
-                    continue;
+				// Pause if simulation stopped
+                pauseLock.lock();
+                try {
+                    while (!isRunning) {
+                        runningCondition.await();
+                    }
+                } finally {
+                    pauseLock.unlock();
                 }
 				
 				if (isOutOfScreen()) {
@@ -63,9 +80,19 @@ public class Vehicle implements Runnable {
 	                // Wait for green
 	                while (!myLight.isGreen()) {
 	                	Thread.sleep(30);
+	                	
+	                	// Check pause while waiting
+                        pauseLock.lock();
+                        try {
+                            while (!isRunning) {
+                                runningCondition.await();
+                            }
+                        } finally {
+                            pauseLock.unlock();
+                        }
 	                }
 
-	                // Enter junction - only 1 vehicle at a time
+	                //	Vehicle enters junction – only one at a time
 	                JunctionManager.getInstance().enterJunction();
 	                
 	                try {
@@ -129,6 +156,16 @@ public class Vehicle implements Runnable {
 	        moveOneStep();
 
 	        Thread.sleep(30);
+	        
+	        // Check pause during intersection
+            pauseLock.lock();
+            try {
+                while (!isRunning) {
+                    runningCondition.await();
+                }
+            } finally {
+                pauseLock.unlock();
+            }
 
 	        // Check if vehicle has left the junction
 	        if (entrance == 0 && y >= midY + roadHalfWidth + 5) break;
@@ -163,29 +200,21 @@ public class Vehicle implements Runnable {
 	            int safeDistance = 40;
 
 	            switch (entrance) {
-
-	                // top -> down
 	                case 0 -> {
 	                    if (other.getY() > y && other.getY() - y < safeDistance) {
 	                        return true;
 	                    }
 	                }
-
-	                // bottom -> up
 	                case 1 -> {
 	                    if (other.getY() < y && y - other.getY() < safeDistance) {
 	                        return true;
 	                    }
 	                }
-
-	                // left -> right
 	                case 2 -> {
 	                    if (other.getX() > x && other.getX() - x < safeDistance) {
 	                        return true;
 	                    }
 	                }
-
-	                // right -> left
 	                case 3 -> {
 	                    if (other.getX() < x && x - other.getX() < safeDistance) {
 	                        return true;

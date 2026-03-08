@@ -24,10 +24,10 @@ public class DrawingPanel extends JPanel {
     
     private volatile boolean isRunning = true;
     
-    public DrawingPanel(TrafficLight horizontalLight, TrafficLight verticalLight) {
+    public DrawingPanel() {
     	setBackground(Color.WHITE);
-        this.horizontalLight = horizontalLight;
-        this.verticalLight = verticalLight;
+        this.horizontalLight = new TrafficLight(true);
+        this.verticalLight = new TrafficLight(false);
         executorService.execute(horizontalLight);
         executorService.execute(verticalLight);
     }
@@ -68,6 +68,7 @@ public class DrawingPanel extends JPanel {
         TrafficLight vehicleTrafficLight = entrance < 2 ? verticalLight : horizontalLight;
         
         Vehicle vehicle = new Vehicle(startX, startY, entrance, vehicleTrafficLight, vehicles);
+        vehicle.setRunning(isRunning);
         vehicles.add(vehicle);
         executorService.execute(vehicle);
 	}
@@ -98,25 +99,21 @@ public class DrawingPanel extends JPanel {
 	    return true;
 	}
 	
-	public void startSimulation() {
-		isRunning = true;
-		
-		synchronized (vehicles) {
-            for (Vehicle vehicle : vehicles) {
-            	vehicle.setRunning(true);
+	// Stop/start entire simulation
+    public void setSimulationRunning(boolean isRunning) {
+        this.isRunning = isRunning;
+
+        // Update traffic lights
+        horizontalLight.setRunning(this.isRunning);
+        verticalLight.setRunning(this.isRunning);
+
+        // Update all vehicles
+        synchronized (vehicles) {
+            for (Vehicle v : vehicles) {
+                v.setRunning(this.isRunning);
             }
         }
-	}
-	
-	public void stopSimulation() {
-		isRunning = false;
-		
-		synchronized (vehicles) {
-            for (Vehicle vehicle : vehicles) {
-            	vehicle.setRunning(false);
-            }
-        }
-	}
+    }
 
 	@Override
 	public void paint(Graphics graphics) {

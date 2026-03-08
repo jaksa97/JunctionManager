@@ -11,73 +11,94 @@ public class TrafficLight implements Runnable {
     private LightState currentState;
     private volatile boolean isRunning = false;
 
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition runningCondition = lock.newCondition();
+    private final ReentrantLock pauseLock = new ReentrantLock();
+    private final Condition runningCondition = pauseLock.newCondition();
 
     public TrafficLight(boolean startsGreen) {
         this.currentState = startsGreen ? new GreenState() : new RedState();
     }
 
     public void setRunning(boolean isRunning) {
-        lock.lock();
+    	pauseLock.lock();
         try {
             this.isRunning = isRunning;
             if (this.isRunning) {
                 runningCondition.signal();	// Wake up the thread
             }
         } finally {
-            lock.unlock();
+        	pauseLock.unlock();
         }
     }
 
     public boolean isGreen() {
-        lock.lock();
+    	pauseLock.lock();
         try {
             return currentState.canPass();
         } finally {
-            lock.unlock();
+        	pauseLock.unlock();
         }
     }
 
     public LightState getCurrentState() {
-        lock.lock();
+    	pauseLock.lock();
         try {
             return currentState;
         } finally {
-            lock.unlock();
+        	pauseLock.unlock();
         }
     }
 
     @Override
     public void run() {
         while (true) {
-            lock.lock();
+            
+        	// Pause if simulation stopped
+            pauseLock.lock();
             try {
                 while (!isRunning) {
-                    runningCondition.await();	// Wait until simulation starts
+                    runningCondition.await();	// Wait until simulation resumes
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;	// Exit thread safely
+                break;
             } finally {
-                lock.unlock();
+                pauseLock.unlock();
             }
 
             try {
-                Thread.sleep(currentState.getDuration());	// Stay in current state
+                // Divide state duration into small steps
+                long duration = currentState.getDuration();
+                long elapsed = 0;
+                long step = 50;	// 50 ms steps
+
+                while (elapsed < duration) {
+                    Thread.sleep(step);
+                    elapsed += step;
+
+                    // Check pause during step
+                    pauseLock.lock();
+                    try {
+                        while (!isRunning) {
+                            runningCondition.await();	// Pause instantly
+                        }
+                    } finally {
+                        pauseLock.unlock();
+                    }
+                }
+
+                // After duration, switch state
+                pauseLock.lock();
+                try {
+                    currentState = currentState.nextState();
+                } finally {
+                    pauseLock.unlock();
+                }
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
-
-            // Change to next state
-            lock.lock();
-            
-            try {
-                currentState = currentState.nextState();
-            } finally {
-                lock.unlock();
-            }
         }
     }
+    
 }
