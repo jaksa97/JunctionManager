@@ -1,18 +1,21 @@
-package model;
+package model.vehicle;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import model.JunctionManager;
+import model.TrafficLight;
 
-public class Vehicle implements Runnable {
+public abstract class Vehicle implements Runnable {
 	
-	public int x, y;
-    private int speed;
-    private Color color;
-    private int entrance;
+	protected int x, y;
+    protected int speed;
+    protected Color color;
+    protected int entrance;
+    protected VehicleType vehicleType;
+    protected int vehicleSize;
     private TrafficLight myLight;
     private List<Vehicle> allVehicles;
     
@@ -26,10 +29,6 @@ public class Vehicle implements Runnable {
         this.entrance = entrance;
         this.myLight = light;
         this.allVehicles = allVehicles;
-        
-        Random random = new Random();
-        this.speed = random.nextInt(3) + 2;
-        this.color = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
     }
     
     public int getX() {
@@ -42,6 +41,10 @@ public class Vehicle implements Runnable {
 
     public int getEntrance() {
         return entrance;
+    }
+    
+    private int getSafeDistance() {
+    	return vehicleSize + 10;
     }
     
     public void setRunning(boolean isRunning) {
@@ -114,32 +117,24 @@ public class Vehicle implements Runnable {
 		}
 	}
 	
-	public void draw(Graphics graphics) {
-		graphics.setColor(color);
-		if(isVertical(entrance)) {
-			graphics.fillRect(x, y, 20, 30);
-		} else {
-			graphics.fillRect(x, y, 30, 20);
-		}
-    }
 	
-	private boolean isVertical(int entrance) {
+	protected boolean isVertical(int entrance) {
 		return entrance < 2;
 	}
 	
 	private boolean isAtStopLine() {
 	    switch (entrance) {
 	        case 0 -> {
-	            return y >= 190 && y <= 200;
+	            return y >= 230 - vehicleSize - 10 && y <= 230 - vehicleSize;
 	        }
 	        case 1 -> {
 	            return y >= 310 && y <= 320;
 	        }
 	        case 2 -> {
-	            return x >= 310 && x <= 320;
+	            return x >= 360 - vehicleSize - 10 && x <= 360 - vehicleSize;
 	        }
 	        case 3 -> {
-	            return x >= 430 && x <= 440;
+	            return x >= 440 && x <= 450;
 	        }
 	        default -> {
 	            return false;
@@ -148,8 +143,8 @@ public class Vehicle implements Runnable {
 	}
 	
 	private void moveThroughIntersection() throws InterruptedException {
-	    int midX = 400;
-	    int midY = 300;
+		int midX = 400;
+	    int midY = 270;
 	    int roadHalfWidth = 40;
 
 	    while (true) {
@@ -169,9 +164,9 @@ public class Vehicle implements Runnable {
 
 	        // Check if vehicle has left the junction
 	        if (entrance == 0 && y >= midY + roadHalfWidth + 5) break;
-	        if (entrance == 1 && y <= midY - roadHalfWidth - 5) break;
+	        if (entrance == 1 && y <= midY - roadHalfWidth - 5 - vehicleSize) break;
 	        if (entrance == 2 && x >= midX + roadHalfWidth + 5) break;
-	        if (entrance == 3 && x <= midX - roadHalfWidth - 5) break;
+	        if (entrance == 3 && x <= midX - roadHalfWidth - 5 - vehicleSize) break;
 	    }
 	}
 	
@@ -197,7 +192,7 @@ public class Vehicle implements Runnable {
 	            if (other.getEntrance() != entrance)
 	                continue;
 
-	            int safeDistance = 40;
+	            int safeDistance = getSafeDistance();
 
 	            switch (entrance) {
 	                case 0 -> {
@@ -228,7 +223,7 @@ public class Vehicle implements Runnable {
 	}
     
     public boolean isOutOfScreen() {
-        return x < -50 || x > 850 || y < -50 || y > 650;
+        return x < (0 - vehicleSize - 10) || x > (800 + vehicleSize + 10) || y < (0 - vehicleSize - 10) || y > (540 + vehicleSize + 10);
     }
     
     private void removeVehicle() {
@@ -238,6 +233,16 @@ public class Vehicle implements Runnable {
         synchronized (allVehicles) {
             allVehicles.remove(this);
         }
+    }
+    
+    
+	public void draw(Graphics graphics) {
+		graphics.setColor(color);
+		if(isVertical(entrance)) {
+			graphics.fillRect(x, y, 20, vehicleSize);
+		} else {
+			graphics.fillRect(x, y, vehicleSize, 20);
+		}
     }
 
 }

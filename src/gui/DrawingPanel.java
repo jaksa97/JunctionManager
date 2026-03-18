@@ -12,7 +12,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.JPanel;
 import model.TrafficLight;
-import model.Vehicle;
+import model.vehicle.Vehicle;
+import model.vehicle.VehicleFactory;
+import model.vehicle.VehicleType;
 
 public class DrawingPanel extends JPanel {
 	
@@ -22,7 +24,7 @@ public class DrawingPanel extends JPanel {
 	private TrafficLight horizontalLight;
     private TrafficLight verticalLight;
     
-    private volatile boolean isRunning = true;
+    private volatile boolean isRunning = false;
     
     public DrawingPanel() {
     	setBackground(Color.WHITE);
@@ -60,14 +62,14 @@ public class DrawingPanel extends JPanel {
 			}
         }
         
-        // Prevent spawn collision
-        if (!canSpawnVehicle(startX, startY, entrance)) {
+        // Prevent spawn
+        if (!canSpawnVehicle(startX, startY, entrance) || !isRunning) {
             return;
         }
         
         TrafficLight vehicleTrafficLight = entrance < 2 ? verticalLight : horizontalLight;
         
-        Vehicle vehicle = new Vehicle(startX, startY, entrance, vehicleTrafficLight, vehicles);
+        Vehicle vehicle = VehicleFactory.createVehicle(VehicleType.getRandomType(), startX, startY, entrance, vehicleTrafficLight, vehicles);
         vehicle.setRunning(isRunning);
         vehicles.add(vehicle);
         executorService.execute(vehicle);
@@ -123,7 +125,7 @@ public class DrawingPanel extends JPanel {
 		
 		int w = getWidth();
         int h = getHeight();
-        
+
         int centerX = w / 2;
         int centerY = h / 2;
 
